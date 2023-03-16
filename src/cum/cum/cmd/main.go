@@ -29,10 +29,7 @@ var (
 	GitState = "clean"
 
 	// GitSummary is the git summary of the application
-	GitSummary = "0000000"
-
-	// GoVersion is the Go version of the application
-	GoVersion = ""
+	GitSummary = "0000000 master"
 
 	// InMemory is a flag to use the in-memory storage
 	InMemory = flag.Bool("in-memory", false, "Use the in-memory storage")
@@ -75,7 +72,7 @@ var (
 )
 
 func version() {
-	fmt.Printf("Version: %s Build: %s BuildDate: %s GitCommit: %s GitBranch: %s, GitState: %s, GitSummary: %s", Version, Build, BuildDate, GitCommit, GitBranch, GitState, GitSummary)
+	fmt.Printf("Version: %s Build: %s BuildDate: %s GitCommit: %s GitBranch: %s, GitSummary: %s", Version, Build, BuildDate, GitCommit, GitBranch, GitSummary)
 }
 
 func help() {

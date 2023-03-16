@@ -7,18 +7,16 @@ VERSION = 0.1.0
 
 build:
 	@echo "Building $(NAME) $(VERSION)..."
-	cd $(SRC_DIR) && go build \
+	@cd $(SRC_DIR) && go build \
 		-ldflags " \
 			-X main.Version=$(VERSION) \
 			-X main.BuildDate=$(shell date -u '+%Y-%m-%dT%I:%M:%SZ') \
 			-X main.GitCommit=$(shell git rev-parse HEAD) \
 			-X main.GitBranch=$(shell git rev-parse --abbrev-ref HEAD) \
-			-X main.GitState=\"$(shell git status --porcelain)\" \
 			-X main.GitSummary=$(shell git describe --tags --always --dirty) \
-			-X main.GoVersion=\"$(shell go version)\" \
-			" \
+		" \
 		-o $(PROJECT_DIR)/bin/$(NAME) \
-		cum/cum/cmd
+		$(NAME)/cum/cmd
 
 clean:
 	@echo "Cleaning..."
