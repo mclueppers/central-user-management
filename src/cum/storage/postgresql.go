@@ -39,25 +39,37 @@ func NewPostgresStorage(config *PostgresStorageConfig) (*PostgresStorage, error)
 	// Create the users table if it doesn't exist
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id VARCHAR(255) PRIMARY KEY, username VARCHAR(255) UNIQUE, email VARCHAR(255) UNIQUE, password VARCHAR(255))")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating users table: %v", err)
 	}
 
 	// Create the groups table if it doesn't exist
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS groups (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255) UNIQUE)")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating groups table: %v", err)
 	}
 
 	// Create the sessions table if it doesn't exist
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS sessions (id VARCHAR(255) PRIMARY KEY, user_id VARCHAR(255), expires_at TIMESTAMP)")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating sessions table: %v", err)
+	}
+
+	// Create member type ENUM
+	_, err = db.Exec(`DO $$
+		BEGIN
+			CREATE TYPE member_type_enum AS ENUM ('user', 'group');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END
+		$$;`)
+	if err != nil {
+		return nil, fmt.Errorf("error creating member_type enum: %v", err)
 	}
 
 	// Create the group_members table if it doesn't exist
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS group_members (group_id VARCHAR(255), member_id VARCHAR(255), member_type VARCHAR(255), PRIMARY KEY (group_id, member_id, member_type))")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS group_members (group_id VARCHAR(255), member_id VARCHAR(255), member_type member_type_enum, PRIMARY KEY (group_id, member_id, member_type))")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating group_members table: %v", err)
 	}
 
 	return &PostgresStorage{
