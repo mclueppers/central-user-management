@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/lib/pq"
 )
@@ -13,6 +14,7 @@ import (
 type PostgresStorage struct {
 	config *PostgresStorageConfig
 	db     *sql.DB
+	mu     sync.Mutex
 }
 
 // PostgresStorageConfig is the configuration for a PostgresStorage
@@ -92,6 +94,9 @@ func (s *PostgresStorage) NewSessionStorage() (types.SessionStorage, error) {
 
 // CreateUser creates a new user
 func (s *PostgresStorage) CreateUser(user *types.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	stmt, err := s.db.Prepare("INSERT INTO users(id, username, email, password) VALUES($1, $2, $3, $4)")
 	if err != nil {
 		return err
@@ -150,6 +155,9 @@ func (s *PostgresStorage) GetUserByEmail(email string) (*types.User, error) {
 
 // UpdateUser updates a user
 func (s *PostgresStorage) UpdateUser(user *types.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	stmt, err := s.db.Prepare("UPDATE users SET username = $2, email = $3, password = $4 WHERE id = $1")
 	if err != nil {
 		return err
@@ -163,6 +171,9 @@ func (s *PostgresStorage) UpdateUser(user *types.User) error {
 
 // DeleteUser deletes a user
 func (s *PostgresStorage) DeleteUser(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	stmt, err := s.db.Prepare("DELETE FROM users WHERE id = $1")
 	if err != nil {
 		return err
@@ -176,6 +187,9 @@ func (s *PostgresStorage) DeleteUser(id string) error {
 
 // CreateGroup creates a new group
 func (s *PostgresStorage) CreateGroup(group *types.Group) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -318,6 +332,9 @@ func (s *PostgresStorage) GetGroupByName(name string) (*types.Group, error) {
 
 // UpdateGroup updates a group
 func (s *PostgresStorage) UpdateGroup(group *types.Group) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -371,6 +388,9 @@ func (s *PostgresStorage) UpdateGroup(group *types.Group) error {
 
 // AddMemberToGroup adds a member to a group
 func (s *PostgresStorage) AddMemberToGroup(member types.Member, groupID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	switch member := member.(type) {
 	case *types.User:
 		user := member
@@ -392,6 +412,9 @@ func (s *PostgresStorage) AddMemberToGroup(member types.Member, groupID string) 
 
 // RemoveMemberFromGroup removes a member from a group
 func (s *PostgresStorage) RemoveMemberFromGroup(member *types.Member, groupID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	switch (*member).(type) {
 	case *types.User:
 		user := (*member).(*types.User)
@@ -413,6 +436,9 @@ func (s *PostgresStorage) RemoveMemberFromGroup(member *types.Member, groupID st
 
 // DeleteGroup deletes a group
 func (s *PostgresStorage) DeleteGroup(group *types.Group) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	_, err := s.db.Exec("DELETE FROM groups WHERE id = $1", group.ID)
 	if err != nil {
 		return err
@@ -422,6 +448,9 @@ func (s *PostgresStorage) DeleteGroup(group *types.Group) error {
 
 // CreateSession creates a new session
 func (s *PostgresStorage) CreateSession(session *types.Session) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	stmt, err := s.db.Prepare("INSERT INTO sessions(id, user_id, expires_at) VALUES($1, $2, $3)")
 	if err != nil {
 		return err
@@ -457,6 +486,9 @@ func (s *PostgresStorage) GetSessionByUserID(userID string) (*types.Session, err
 
 // UpdateSession updates a session
 func (s *PostgresStorage) UpdateSession(session *types.Session) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	stmt, err := s.db.Prepare("UPDATE sessions SET user_id = $2, expires_at = $3 WHERE id = $1")
 	if err != nil {
 		return err
@@ -470,6 +502,9 @@ func (s *PostgresStorage) UpdateSession(session *types.Session) error {
 
 // DeleteSession deletes a session
 func (s *PostgresStorage) DeleteSession(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	stmt, err := s.db.Prepare("DELETE FROM sessions WHERE id = $1")
 	if err != nil {
 		return err
@@ -477,6 +512,21 @@ func (s *PostgresStorage) DeleteSession(id string) error {
 	_, err = stmt.Exec(id)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// Close closes the database connection
+func (s *PostgresStorage) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	err := s.db.Close()
+	if err != nil {
+		// Check if the connection is already closed
+		if err.Error() != "sql: database is closed" {
+			return err
+		}
 	}
 	return nil
 }

@@ -12,6 +12,7 @@ type User struct {
 
 // UserStorage represents a storage for users
 type UserStorage interface {
+	Close() error
 	CreateUser(user *User) error
 	GetUserByID(id string) (*User, error)
 	GetUserByEmail(email string) (*User, error)

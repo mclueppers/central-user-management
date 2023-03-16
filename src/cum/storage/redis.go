@@ -3,6 +3,7 @@ package storage
 import (
 	"cum/types"
 	"fmt"
+	"sync"
 
 	"github.com/go-redis/redis"
 )
@@ -10,6 +11,7 @@ import (
 // RedisStorage is a storage backend that uses Redis as a backend
 type RedisStorage struct {
 	client *redis.Client
+	mu     sync.Mutex
 }
 
 // RedisStorageConfig is the configuration for the RedisStorage
@@ -55,6 +57,9 @@ func (r *RedisStorage) Get(key string) (string, error) {
 
 // CreateUser creates a new user
 func (r *RedisStorage) CreateUser(user *types.User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Set(user.ID, user, 0).Err()
 }
 
@@ -76,6 +81,9 @@ func (r *RedisStorage) GetUserByID(id string) (*types.User, error) {
 
 // UpdateUser updates a user
 func (r *RedisStorage) UpdateUser(user *types.User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Set(user.ID, user, 0).Err()
 }
 
@@ -86,11 +94,17 @@ func (r *RedisStorage) GetUserByUsername(username string) (*types.User, error) {
 
 // DeleteUser deletes a user
 func (r *RedisStorage) DeleteUser(user string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Del(user).Err()
 }
 
 // CreateGroup creates a new group
 func (r *RedisStorage) CreateGroup(group *types.Group) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Set(group.ID, group, 0).Err()
 }
 
@@ -112,26 +126,41 @@ func (r *RedisStorage) GetGroupByName(name string) (*types.Group, error) {
 
 // UpdateGroup updates a group
 func (r *RedisStorage) UpdateGroup(group *types.Group) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Set(group.ID, group, 0).Err()
 }
 
 // AddMemberToGroup adds a member to a group
 func (r *RedisStorage) AddMemberToGroup(m types.Member, parentGroupId string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return nil
 }
 
 // RemoveMemberFromGroup removes a member from a group
 func (r *RedisStorage) RemoveMemberFromGroup(m *types.Member, parentGroupId string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return nil
 }
 
 // DeleteGroup deletes a group
 func (r *RedisStorage) DeleteGroup(group *types.Group) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Del(group.ID).Err()
 }
 
 // CreateSession creates a new session
 func (r *RedisStorage) CreateSession(session *types.Session) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Set(session.ID, session, 0).Err()
 }
 
@@ -148,15 +177,32 @@ func (r *RedisStorage) GetSessionByID(id string) (*types.Session, error) {
 
 // UpdateSession updates a session
 func (r *RedisStorage) UpdateSession(session *types.Session) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Set(session.ID, session, 0).Err()
 }
 
 // DeleteSession deletes a session
 func (r *RedisStorage) DeleteSession(session string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.client.Del(session).Err()
 }
 
 // Close closes the storage
 func (r *RedisStorage) Close() error {
-	return r.client.Close()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	err := r.client.Close()
+	if err != nil {
+		// Check if the client is already closed
+		if err.Error() != "redis: client is closed" {
+			return err
+		}
+	}
+
+	return nil
 }

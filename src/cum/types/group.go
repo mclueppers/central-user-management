@@ -17,6 +17,7 @@ type Group struct {
 // GroupStorage represents a storage for groups
 type GroupStorage interface {
 	AddMemberToGroup(m Member, parentGroupID string) error
+	Close() error
 	CreateGroup(group *Group) error
 	DeleteGroup(group *Group) error
 	GetGroupByID(id string) (*Group, error)

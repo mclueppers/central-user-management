@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"cum/types"
 )
@@ -13,6 +14,7 @@ type InMemoryStorage struct {
 	Users    map[string]*types.User
 	Groups   map[string]*types.Group
 	Sessions map[string]*types.Session
+	mu       sync.Mutex
 }
 
 // NewInMemoryStorage creates a new InMemoryStorage
@@ -38,6 +40,9 @@ func (s *InMemoryStorage) NewSessionStorage() (types.SessionStorage, error) {
 
 // CreateUser creates a new user
 func (s *InMemoryStorage) CreateUser(user *types.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Users[user.ID]; ok {
 		return errors.New("user already exists")
 	}
@@ -75,6 +80,9 @@ func (s *InMemoryStorage) GetUserByEmail(email string) (*types.User, error) {
 
 // UpdateUser updates a user
 func (s *InMemoryStorage) UpdateUser(user *types.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Users[user.ID]; !ok {
 		return errors.New("user not found")
 	}
@@ -84,6 +92,9 @@ func (s *InMemoryStorage) UpdateUser(user *types.User) error {
 
 // DeleteUser deletes a user
 func (s *InMemoryStorage) DeleteUser(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Users[id]; !ok {
 		return errors.New("user not found")
 	}
@@ -93,6 +104,9 @@ func (s *InMemoryStorage) DeleteUser(id string) error {
 
 // CreateGroup creates a new group
 func (s *InMemoryStorage) CreateGroup(group *types.Group) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Groups[group.ID]; ok {
 		return errors.New("group already exists")
 	}
@@ -120,6 +134,9 @@ func (s *InMemoryStorage) GetGroupByName(name string) (*types.Group, error) {
 
 // UpdateGroup updates a group
 func (s *InMemoryStorage) UpdateGroup(group *types.Group) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Groups[group.ID]; !ok {
 		return errors.New("group not found")
 	}
@@ -129,6 +146,9 @@ func (s *InMemoryStorage) UpdateGroup(group *types.Group) error {
 
 // DeleteGroup deletes a group
 func (s *InMemoryStorage) DeleteGroup(group *types.Group) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Groups[group.ID]; !ok {
 		return errors.New("group not found")
 	}
@@ -138,6 +158,9 @@ func (s *InMemoryStorage) DeleteGroup(group *types.Group) error {
 
 // AddMemberToGroup adds a member to a group
 func (s *InMemoryStorage) AddMemberToGroup(m types.Member, groupID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Groups[groupID]; !ok {
 		return errors.New("group not found")
 	}
@@ -147,6 +170,9 @@ func (s *InMemoryStorage) AddMemberToGroup(m types.Member, groupID string) error
 
 // RemoveMemberFromGroup removes a member from a group
 func (s *InMemoryStorage) RemoveMemberFromGroup(m *types.Member, groupID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Groups[groupID]; !ok {
 		return errors.New("group not found")
 	}
@@ -161,6 +187,9 @@ func (s *InMemoryStorage) RemoveMemberFromGroup(m *types.Member, groupID string)
 
 // CreateSession creates a new session
 func (s *InMemoryStorage) CreateSession(session *types.Session) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Sessions[session.ID]; ok {
 		return errors.New("session already exists")
 	}
@@ -178,6 +207,9 @@ func (s *InMemoryStorage) GetSessionByID(id string) (*types.Session, error) {
 
 // DeleteSession deletes a session
 func (s *InMemoryStorage) DeleteSession(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Sessions[id]; !ok {
 		return errors.New("session not found")
 	}
@@ -202,4 +234,9 @@ func (s *InMemoryStorage) String() string {
 		sb.WriteString(fmt.Sprintf("\t\t%s\n", session))
 	}
 	return sb.String()
+}
+
+// Close closes the storage
+func (s *InMemoryStorage) Close() error {
+	return nil
 }

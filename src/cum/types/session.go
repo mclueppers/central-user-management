@@ -11,6 +11,7 @@ type Session struct {
 
 // SessionStorage represents a storage for sessions
 type SessionStorage interface {
+	Close() error
 	CreateSession(session *Session) error
 	GetSessionByID(id string) (*Session, error)
 	DeleteSession(id string) error

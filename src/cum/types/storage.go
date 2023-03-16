@@ -5,6 +5,7 @@ type Storage interface {
 	UserStorage
 	GroupStorage
 	SessionStorage
+	Close() error
 }
 
 // StorageFactory represents a factory for storages
@@ -127,4 +128,18 @@ func (s *storage) GetSessionByID(id string) (*Session, error) {
 // DeleteSession deletes a session
 func (s *storage) DeleteSession(id string) error {
 	return s.sessionStorage.DeleteSession(id)
+}
+
+// Close closes the storage
+func (s *storage) Close() error {
+	if err := s.userStorage.Close(); err != nil {
+		return err
+	}
+	if err := s.groupStorage.Close(); err != nil {
+		return err
+	}
+	if err := s.sessionStorage.Close(); err != nil {
+		return err
+	}
+	return nil
 }
