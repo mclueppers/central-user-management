@@ -4,10 +4,12 @@ import "fmt"
 
 // User represents a user entity
 type User struct {
-	ID       string
-	Username string
-	Email    string
-	Password string
+	ID        string
+	FirstName string
+	LastName  string
+	Username  string
+	Email     string
+	Password  string
 }
 
 // UserStorage represents a storage for users
