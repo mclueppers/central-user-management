@@ -16,10 +16,17 @@ type AWSService struct {
 }
 
 // NewAWSService creates a new AWS service
-func NewAWSService() *AWSService {
-	return &AWSService{
-		iam: iam.New(session.New(), aws.NewConfig().WithRegion("us-east-1")),
+func NewAWSService() (*AWSService, error) {
+	s, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	return &AWSService{
+		iam: iam.New(s, aws.NewConfig().WithRegion("us-east-1")),
+	}, nil
 }
 
 // AddUser adds a user to the service

@@ -218,7 +218,7 @@ func (s *LDAPService) GetUsers() ([]types.User, error) {
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 
 		// The filter is the username.
-		fmt.Sprintf("(objectClass=inetOrgPerson)"),
+		"(objectClass=inetOrgPerson)",
 		[]string{"cn", "sn", "uid", "gecos"},
 		nil,
 	)
@@ -262,7 +262,7 @@ func (s *LDAPService) GetTeams() ([]types.Team, error) {
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 
 		// The filter is the username.
-		fmt.Sprintf("(objectClass=posixGroup)"),
+		"(objectClass=posixGroup)",
 		[]string{"cn", "gidNumber"},
 		nil,
 	)
