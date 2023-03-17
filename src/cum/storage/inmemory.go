@@ -44,7 +44,7 @@ func (s *InMemoryStorage) CreateUser(user *types.User) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.Users[user.ID]; ok {
-		return errors.New("user already exists")
+		return types.ErrUserAlreadyExists
 	}
 	s.Users[user.ID] = user
 	return nil
@@ -55,7 +55,7 @@ func (s *InMemoryStorage) GetUserByID(id string) (*types.User, error) {
 	if user, ok := s.Users[id]; ok {
 		return user, nil
 	}
-	return nil, errors.New("user not found")
+	return nil, types.ErrUserNotFound
 }
 
 // GetUserByUsername returns a user by its username
@@ -65,7 +65,7 @@ func (s *InMemoryStorage) GetUserByUsername(username string) (*types.User, error
 			return user, nil
 		}
 	}
-	return nil, errors.New("username not found")
+	return nil, types.ErrUsernameNotFound
 }
 
 // GetUserByEmail returns a user by its email
@@ -75,7 +75,7 @@ func (s *InMemoryStorage) GetUserByEmail(email string) (*types.User, error) {
 			return user, nil
 		}
 	}
-	return nil, errors.New("user not found")
+	return nil, types.ErrUserNotFound
 }
 
 // UpdateUser updates a user
@@ -84,7 +84,7 @@ func (s *InMemoryStorage) UpdateUser(user *types.User) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.Users[user.ID]; !ok {
-		return errors.New("user not found")
+		return types.ErrUserNotFound
 	}
 	s.Users[user.ID] = user
 	return nil
@@ -96,7 +96,7 @@ func (s *InMemoryStorage) DeleteUser(id string) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.Users[id]; !ok {
-		return errors.New("user not found")
+		return types.ErrUserNotFound
 	}
 	delete(s.Users, id)
 	return nil
@@ -108,7 +108,7 @@ func (s *InMemoryStorage) CreateGroup(group *types.Group) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.Groups[group.ID]; ok {
-		return errors.New("group already exists")
+		return types.ErrGroupAlreadyExists
 	}
 	s.Groups[group.ID] = group
 	return nil
@@ -119,7 +119,7 @@ func (s *InMemoryStorage) GetGroupByID(id string) (*types.Group, error) {
 	if group, ok := s.Groups[id]; ok {
 		return group, nil
 	}
-	return nil, errors.New("group not found")
+	return nil, types.ErrGroupNotFound
 }
 
 // GetGroupByName returns a group by its name
@@ -129,7 +129,7 @@ func (s *InMemoryStorage) GetGroupByName(name string) (*types.Group, error) {
 			return group, nil
 		}
 	}
-	return nil, errors.New("group not found")
+	return nil, types.ErrGroupNotFound
 }
 
 // UpdateGroup updates a group
@@ -138,7 +138,7 @@ func (s *InMemoryStorage) UpdateGroup(group *types.Group) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.Groups[group.ID]; !ok {
-		return errors.New("group not found")
+		return types.ErrGroupNotFound
 	}
 	s.Groups[group.ID] = group
 	return nil
@@ -150,7 +150,7 @@ func (s *InMemoryStorage) DeleteGroup(group *types.Group) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.Groups[group.ID]; !ok {
-		return errors.New("group not found")
+		return types.ErrGroupNotFound
 	}
 	delete(s.Groups, group.ID)
 	return nil
@@ -162,7 +162,7 @@ func (s *InMemoryStorage) AddMemberToGroup(m types.Member, groupID string) error
 	defer s.mu.Unlock()
 
 	if _, ok := s.Groups[groupID]; !ok {
-		return errors.New("group not found")
+		return types.ErrGroupNotFound
 	}
 	s.Groups[groupID].Members = append(s.Groups[groupID].Members, &m)
 	return nil
@@ -174,7 +174,7 @@ func (s *InMemoryStorage) RemoveMemberFromGroup(m *types.Member, groupID string)
 	defer s.mu.Unlock()
 
 	if _, ok := s.Groups[groupID]; !ok {
-		return errors.New("group not found")
+		return types.ErrGroupNotFound
 	}
 	for i, id := range s.Groups[groupID].Members {
 		if (*id).GetID() == (*m).GetID() {
@@ -182,7 +182,7 @@ func (s *InMemoryStorage) RemoveMemberFromGroup(m *types.Member, groupID string)
 			return nil
 		}
 	}
-	return errors.New("member not found")
+	return types.ErrMemberNotFound
 }
 
 // CreateSession creates a new session

@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // Storage represents a storage for users, groups and sessions
 type Storage interface {
 	UserStorage
@@ -132,6 +134,7 @@ func (s *storage) DeleteSession(id string) error {
 
 // Close closes the storage
 func (s *storage) Close() error {
+	fmt.Println("Closing storage")
 	if err := s.userStorage.Close(); err != nil {
 		return err
 	}

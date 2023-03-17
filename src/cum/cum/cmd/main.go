@@ -124,6 +124,9 @@ func main() {
 		log.Fatal("No storage specified")
 	}
 
+	// Close storage when the application exits
+	defer myStorage.Close()
+
 	// Create a new user
 	user := &types.User{
 		ID:       "user1",
@@ -133,7 +136,10 @@ func main() {
 	}
 	err = myStorage.CreateUser(user)
 	if err != nil {
-		log.Printf("Failed to create user: %v", err)
+		if err != types.ErrUserAlreadyExists {
+			// Handle error
+			log.Printf("Failed to create user: %v", err)
+		}
 	}
 
 	// Create a new user

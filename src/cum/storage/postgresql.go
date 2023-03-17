@@ -104,7 +104,7 @@ func (s *PostgresStorage) CreateUser(user *types.User) error {
 	_, err = stmt.Exec(user.ID, user.Username, user.Email, user.Password)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == "unique_violation" {
-			return errors.New("user already exists")
+			return types.ErrUserAlreadyExists
 		}
 		return err
 	}
@@ -118,7 +118,7 @@ func (s *PostgresStorage) GetUserByID(id string) (*types.User, error) {
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("user not found")
+			return nil, types.ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (s *PostgresStorage) GetUserByUsername(username string) (*types.User, error
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("username not found")
+			return nil, types.ErrUsernameNotFound
 		}
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (s *PostgresStorage) GetUserByEmail(email string) (*types.User, error) {
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("user email not found")
+			return nil, types.ErrEmailNotFound
 		}
 		return nil, err
 	}
@@ -164,6 +164,10 @@ func (s *PostgresStorage) UpdateUser(user *types.User) error {
 	}
 	_, err = stmt.Exec(user.ID, user.Username, user.Email, user.Password)
 	if err != nil {
+		// Check if the error is a unique violation
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == "unique_violation" {
+			return types.ErrUserAlreadyExists
+		}
 		return err
 	}
 	return nil
@@ -205,7 +209,7 @@ func (s *PostgresStorage) CreateGroup(group *types.Group) error {
 	if err != nil {
 		tx.Rollback()
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == "unique_violation" {
-			return errors.New("group already exists")
+			return types.ErrGroupAlreadyExists
 		}
 		return err
 	}
@@ -250,7 +254,7 @@ func (s *PostgresStorage) GetGroupByID(id string) (*types.Group, error) {
 	err := s.db.QueryRow("SELECT id, name FROM groups WHERE id = $1", id).Scan(&group.ID, &group.Name)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("group not found")
+			return nil, types.ErrGroupNotFound
 		}
 		return nil, err
 	}
@@ -274,7 +278,7 @@ func (s *PostgresStorage) GetGroupByID(id string) (*types.Group, error) {
 		} else if memberType == "group" {
 			member, err = s.GetGroupByID(memberID)
 		} else {
-			return nil, errors.New("invalid member type")
+			return nil, types.ErrInvalidMemberType
 		}
 
 		if err != nil {
@@ -317,7 +321,7 @@ func (s *PostgresStorage) GetGroupByName(name string) (*types.Group, error) {
 		} else if memberType == "group" {
 			member, err = s.GetGroupByID(memberID)
 		} else {
-			return nil, errors.New("invalid member type")
+			return nil, types.ErrInvalidMemberType
 		}
 
 		if err != nil {
@@ -405,7 +409,7 @@ func (s *PostgresStorage) AddMemberToGroup(member types.Member, groupID string) 
 			return err
 		}
 	default:
-		return errors.New("unknown member type")
+		return types.ErrInvalidMemberType
 	}
 	return nil
 }
@@ -429,7 +433,7 @@ func (s *PostgresStorage) RemoveMemberFromGroup(member *types.Member, groupID st
 			return err
 		}
 	default:
-		return errors.New("unknown member type")
+		return types.ErrInvalidMemberType
 	}
 	return nil
 }
